@@ -91,15 +91,17 @@ void ImageSegDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom
   // image
   const int crop_size = this->layer_param_.transform_param().crop_size();
   const int batch_size = this->layer_param_.image_data_param().batch_size();
+  // label
+  const int label_channels = is_color ? 3 : 1;
   if (crop_size > 0) {
     top[0]->Reshape(batch_size, channels, crop_size, crop_size);
     this->prefetch_data_.Reshape(batch_size, channels, crop_size, crop_size);
     this->transformed_data_.Reshape(1, channels, crop_size, crop_size);
 
     //label
-    top[1]->Reshape(batch_size, 1, crop_size, crop_size);
-    this->prefetch_label_.Reshape(batch_size, 1, crop_size, crop_size);
-    this->transformed_label_.Reshape(1, 1, crop_size, crop_size);
+    top[1]->Reshape(batch_size, label_channels, crop_size, crop_size);
+    this->prefetch_label_.Reshape(batch_size, label_channels, crop_size, crop_size);
+    this->transformed_label_.Reshape(1, label_channels, crop_size, crop_size);
      
   } else {
     top[0]->Reshape(batch_size, channels, height, width);
@@ -107,9 +109,9 @@ void ImageSegDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom
     this->transformed_data_.Reshape(1, channels, height, width);
 
     //label
-    top[1]->Reshape(batch_size, 1, height, width);
-    this->prefetch_label_.Reshape(batch_size, 1, height, width);
-    this->transformed_label_.Reshape(1, 1, height, width);     
+    top[1]->Reshape(batch_size, label_channels, height, width);
+    this->prefetch_label_.Reshape(batch_size, label_channels, height, width);
+    this->transformed_label_.Reshape(1, label_channels, height, width);
   }
 
   // image dimensions, for each image, stores (img_height, img_width)
@@ -187,7 +189,7 @@ void ImageSegDataLayer<Dtype>::InternalThreadEntry() {
     }
     if (label_type == ImageDataParameter_LabelType_PIXEL) {
       cv_img_seg.push_back(ReadImageToCVMatNearest(root_folder + lines_[lines_id_].second,
-					    new_height, new_width, false));
+                        new_height, new_width, is_color));
       if (!cv_img_seg[1].data) {
 	DLOG(INFO) << "Fail to load seg: " << root_folder + lines_[lines_id_].second;
       }

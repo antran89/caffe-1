@@ -305,12 +305,13 @@ void DataTransformer<Dtype>::TransformImgAndSeg(const std::vector<cv::Mat>& cv_i
   const int label_height   = transformed_label_blob->height();
   const int label_width    = transformed_label_blob->width();
 
-  CHECK_EQ(seg_channels, 1);
+  //CHECK_EQ(seg_channels, 1);
   CHECK_EQ(img_channels, data_channels);
   CHECK_EQ(img_height, seg_height);
   CHECK_EQ(img_width, seg_width);
 
-  CHECK_EQ(label_channels, 1);
+  //CHECK_EQ(label_channels, 1);
+  CHECK_EQ(seg_channels, label_channels);
   CHECK_EQ(data_height, label_height);
   CHECK_EQ(data_width, label_width);
 
@@ -426,14 +427,16 @@ void DataTransformer<Dtype>::TransformImgAndSeg(const std::vector<cv::Mat>& cv_i
         }
       }
 
-      // for segmentation
-      if (do_mirror) {
-        top_index = h * data_width + data_width - 1 - w;
-      } else {
-        top_index = h * data_width + w;
+      // for labels
+      for (int c = 0; c < label_channels; c++) {
+          if (do_mirror) {
+              top_index = (c * data_height + h) * data_width + data_width - 1 - w;
+          } else {
+              top_index = (c * data_height + h) * data_width + w;
+          }
+          Dtype pixel = static_cast<Dtype>(label_ptr[label_index++]);
+          transformed_label[top_index] = pixel;
       }
-      Dtype pixel = static_cast<Dtype>(label_ptr[label_index++]);
-      transformed_label[top_index] = pixel;
     }
 
   }
